@@ -1,0 +1,8 @@
+- Crawl loigiaihay:
+  + Format lại form
+  + Thử xem có sử dụng AI để xử lý chuyển sang file pdf
+  + Crawl data từ lớp 1 đến 12
+- Crawl audio từ 2 web
+  + https://librivox.org/search?primary_key=0&search_category=genre&search_page=1&search_form=get_results&search_order=alpha
+  + https://sachnoiviet.net/sach-noi/van-te-nghia-si-can-giuoc
+  + List info audio chi tiết kèm link audio crawl

@@ -1,3 +1,4 @@
+# Crarl dữ liệu không có dạng MathJax
 import requests
 from bs4 import BeautifulSoup, NavigableString
 import os
@@ -8,7 +9,6 @@ import urllib.request
 from docx.shared import Inches
 
 # Hàm thêm văn bản với định dạng vào tài liệu Word
-# Hàm thêm văn bản với định dạng vào tài liệu Word
 def add_formatted_text(paragraph, text, bold=False, italic=False, underline=False):
     run = paragraph.add_run(text)
     run.bold = bold
@@ -16,7 +16,7 @@ def add_formatted_text(paragraph, text, bold=False, italic=False, underline=Fals
     run.underline = underline
 
 # Hàm xử lý nội dung đệ quy (bao gồm văn bản định dạng, bảng và ảnh)
-def process_element(element, doc, title, div_id, image_dir, headers, paragraph):
+def process_element(element, doc, title, div_id, image_dir, headers, paragraph, bold=False, italic=False, underline=False):
     if isinstance(element, NavigableString):  # Văn bản thô
         text = element.strip()
         if text:
@@ -48,18 +48,20 @@ def process_element(element, doc, title, div_id, image_dir, headers, paragraph):
                 for j, cell in enumerate(cells):
                     if j < num_cols:
                         doc_table.rows[i].cells[j].text = cell.text.strip()
-    elif element.name:  # Các thẻ khác (p, div, span, strong, em, u, v.v.)
-        bold = element.name in ['strong', 'b']
-        italic = element.name in ['em', 'i']
-        underline = element.name == 'u'
+    elif element.name:
+        # Cập nhật trạng thái định dạng dựa trên thẻ hiện tại
+        new_bold = bold or element.name in ['strong', 'b']
+        new_italic = italic or element.name in ['em', 'i']
+        new_underline = underline or element.name == 'u'
         
         for child in element.children:
             if isinstance(child, NavigableString):
                 text = child.strip()
                 if text:
-                    add_formatted_text(paragraph, text, bold, italic, underline)
+                    add_formatted_text(paragraph, text, new_bold, new_italic, new_underline)
             else:
-                process_element(child, doc, title, div_id, image_dir, headers, paragraph)
+                # Truyền trạng thái định dạng mới vào đệ quy
+                process_element(child, doc, title, image_dir, headers, paragraph, new_bold, new_italic, new_underline)
 
 # Hàm crawl nội dung một trang và lưu dưới dạng .docx
 def crawl_single_page(url, output_dir="articles"):
@@ -98,17 +100,20 @@ def crawl_single_page(url, output_dir="articles"):
         # Lặp qua từng div
         for div in content_divs:
             div_id = div.get('id', 'Không có ID')
-            
+
             # Loại bỏ tất cả các div với class="section-explanation-tab"
             for explanation in div.find_all('div', class_='section-explanation-tab'):
                 explanation.decompose()
+            for explanation in div.find_all('div', class_='Choose-fast'):
+                explanation.decompose()
+
             
             # Xử lý toàn bộ nội dung trong div
             paragraph = doc.add_paragraph()  # Tạo một paragraph ban đầu cho mỗi div
             for element in div.children:
                 if element.name in ['p', 'div']:  # Tạo paragraph mới cho <p> hoặc <div>
                     paragraph = doc.add_paragraph()
-                process_element(element, doc, title, div_id, image_dir, headers, paragraph)
+                process_element(element, doc, title, div_id, image_dir, headers, paragraph, bold=False, italic=False, underline=False)
             
             # Thêm dòng trống sau mỗi phần (chỉ một lần)
             doc.add_paragraph("")
@@ -120,5 +125,5 @@ def crawl_single_page(url, output_dir="articles"):
         print(f"Không thể truy cập {url}. Mã lỗi: {response.status_code}")
 
 # URL của trang muốn crawl
-url = "https://loigiaihay.com/soan-bai-xuan-toc-do-cuu-quoc-sgk-ngu-van-12-tap-1-ket-noi-tri-thuc-a155694.html"  # Thay bằng URL của bạn
+url = "https://loigiaihay.com/-giai-muc-1-trang-567-sgk-toan-12-tap-1-ket-noi-tri-thuc-a157122.html"  # Thay bằng URL của bạn
 crawl_single_page(url)
